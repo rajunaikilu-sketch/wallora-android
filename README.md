@@ -1,20 +1,32 @@
-# Wallora Android App
+# 🎨 Wallora Android Wallpaper App
 
-This repository is prepared to import the uploaded **wallpaper-android-main.zip** Android Studio project and attempt a free debug APK build using GitHub Actions.
+The Android source files from the supplied `wallpaper-android-main.zip` have been successfully imported into this repository. The complete ZIP passed an SHA-256 integrity check during GitHub Actions import.
 
-## Import source from Android phone
+## What's included
+- Kotlin Android app, original layouts, test classes, resources and the 12 supplied wallpaper images
+- Gallery, search, favorites, set wallpaper, share and save
+- AdMob integration with **test IDs** for development
+- Gradle wrapper and Android Studio project
 
-1. Open this repository in your browser.
-2. Select **Add file → Upload files**.
-3. Upload the original file named **wallpaper-android-main.zip** (do not rename or unpack it).
-4. Select **Commit changes** to `main`.
-5. Go to **Actions → Import Wallora ZIP and Build Debug APK**. The workflow starts automatically on the ZIP upload. The import job unpacks the project into its usual Android Studio layout, commits its source files to this repository, and removes the ZIP.
-6. The build job then tries to build a debug APK. Once successful, download the **Wallora-debug-apk** artifact from the workflow run.
+## Build a testing APK on GitHub
 
-**Note:** A debug APK is for personal testing, not a Play Store release. An APK has not been built or verified yet.
+Open [GitHub Actions](https://github.com/rajunaikilu-sketch/wallora-android/actions/workflows/build-apk.yml). The **Build Wallora Debug APK** workflow runs automatically for source-code changes and can be started with **Run workflow**. Open a successful workflow run and download **Wallora-debug-apk** from **Artifacts**. GitHub Actions stores APK artifacts as a ZIP; extract that download to obtain the `.apk`.
 
-Source license: MIT according to the supplied project. The included example wallpaper images are demo assets; check their licenses or replace them before public distribution. AdMob IDs are test IDs and must be replaced before a production release.
+The app has **not** been published to Google Play. A debug APK is for your personal testing only; it is not a signed production release.
 
-## Android Studio
+## Build in Android Studio
 
-After the import, clone the repository or download its source ZIP, open the project in Android Studio, and run `./gradlew assembleDebug` to build locally.
+1. Clone this repository, or download the source ZIP.
+2. Open the project folder in Android Studio.
+3. Install Android SDK components requested by Android Studio.
+4. Choose **Build → Build APK(s)**, or run `./gradlew assembleDebug`.
+
+## Important before publishing
+
+- The 12 example wallpaper images from the supplied archive may have independent licensing restrictions. Check rights or replace them before releasing publicly.
+- Keep AdMob test IDs until development testing finishes. Configure your own production IDs only before publishing.
+- Update app ID, branding, privacy policy, permissions and store listing as needed.
+- The source license appears in [LICENSE](LICENSE); review third-party asset licenses separately.
+- Original project notes are preserved in [ORIGINAL_README.md](ORIGINAL_README.md).
+
+This repository is independent of the PETRO-gpt project.
