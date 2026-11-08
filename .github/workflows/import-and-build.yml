@@ -3,7 +3,7 @@ name: Import Wallora ZIP and Build Debug APK
 on:
   push:
     paths:
-      - wallpaper-android-main.zip
+      - '.github-import/**'
 
 permissions:
   contents: read
@@ -21,7 +21,13 @@ jobs:
       - name: Validate ZIP and import project
         shell: bash
         run: |
-          test -f wallpaper-android-main.zip
+          test "$(find .github-import -maxdepth 1 -type f -name 'part-*.b64' | wc -l)" -eq 24
+          : > wallpaper-android-main.zip
+          for part in .github-import/part-*.b64; do
+            base64 -d "$part" >> wallpaper-android-main.zip
+          done
+          echo "bed820dc1311d163b39bcb8267e85ae2aebffe7b60f9d90c86391d4489de58eb  wallpaper-android-main.zip" | sha256sum --check
+
           python3 - <<'PY'
           from pathlib import PurePosixPath, Path
           import zipfile, stat
@@ -49,7 +55,7 @@ jobs:
           PY
           cp _imported/wallpaper-android-main/README.md ORIGINAL_README.md
           rsync -a --exclude='.git' --exclude='.github' --exclude='README.md' _imported/wallpaper-android-main/ ./
-          rm -rf _imported wallpaper-android-main.zip
+          rm -rf _imported wallpaper-android-main.zip .github-import
 
       - name: Commit imported project
         shell: bash
