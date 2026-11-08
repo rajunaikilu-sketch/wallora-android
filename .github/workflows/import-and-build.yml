@@ -1,0 +1,101 @@
+name: Import Wallora ZIP and Build Debug APK
+
+on:
+  push:
+    paths:
+      - wallpaper-android-main.zip
+
+permissions:
+  contents: read
+
+jobs:
+  import-source:
+    name: Unpack ZIP into repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate ZIP and import project
+        shell: bash
+        run: |
+          test -f wallpaper-android-main.zip
+          python3 - <<'PY'
+          from pathlib import PurePosixPath, Path
+          import zipfile, stat
+
+          archive = Path("wallpaper-android-main.zip")
+          with zipfile.ZipFile(archive) as z:
+              items = z.infolist()
+              if not items:
+                  raise ValueError("Empty ZIP")
+              total = 0
+              for item in items:
+                  path = PurePosixPath(item.filename)
+                  if path.is_absolute() or ".." in path.parts or not path.parts or path.parts[0] != "wallpaper-android-main":
+                      raise ValueError("Unexpected archive path: " + item.filename)
+                  mode = (item.external_attr >> 16) & 0o170000
+                  if mode == stat.S_IFLNK:
+                      raise ValueError("Symbolic links are not allowed")
+                  total += item.file_size
+              if total > 100_000_000:
+                  raise ValueError("Expanded archive exceeds 100MB")
+              z.extractall("_imported")
+          project = Path("_imported/wallpaper-android-main")
+          if not (project / "app/build.gradle.kts").is_file() or not (project / "gradlew").is_file():
+              raise ValueError("Expected Android project files missing")
+          PY
+          cp _imported/wallpaper-android-main/README.md ORIGINAL_README.md
+          rsync -a --exclude='.git' --exclude='.github' --exclude='README.md' _imported/wallpaper-android-main/ ./
+          rm -rf _imported wallpaper-android-main.zip
+
+      - name: Commit imported project
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Import Wallora Android source from ZIP"
+            git push origin HEAD:main
+          fi
+
+  build-debug-apk:
+    name: Build a testing APK
+    needs: import-source
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out imported project
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        shell: bash
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon --stacktrace assembleDebug
+
+      - name: Save APK to workflow artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Wallora-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
