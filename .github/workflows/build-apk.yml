@@ -35,8 +35,7 @@ jobs:
         run: |
           echo "ANDROID_HOME=${ANDROID_HOME:-/usr/local/lib/android/sdk}" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=${ANDROID_HOME:-/usr/local/lib/android/sdk}" >> "$GITHUB_ENV"
-          command -v sdkmanager
-          sdkmanager --version
+          test -d "${ANDROID_HOME:-/usr/local/lib/android/sdk}"
 
       - name: Prepare Gradle
         uses: gradle/actions/setup-gradle@v4
